@@ -1,0 +1,81 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn import metrics
+
+# Reading data through url
+url = "https://raw.githubusercontent.com/AdiPersonalWorks/Random/master/student_scores%20-%20student_scores.csv"
+dataframe= pd.read_csv(url)
+
+# Plotting the distribution of scores
+dataframe.plot(x='Hours', y='Scores', style='o')
+plt.title('Hours vs Percentage')
+plt.xlabel('Hours Studied')
+plt.ylabel('Percentage Score')
+plt.show()
+
+# get number of records from given data
+no_records = len(dataframe)
+
+# create input numpy array
+X = pd.DataFrame(dataframe['Hours']).to_numpy()
+
+# adding column of ones into input array for easy multiplication with theta array
+X = np.append(np.ones([no_records,1]),X,axis=1)
+
+# create output array
+Y = pd.DataFrame(dataframe['Scores']).to_numpy()
+
+X_train, X_test, y_train, y_test = train_test_split(X, Y,
+                            test_size=0.2, random_state=0)
+
+no_train_records = len(X_train)
+
+# set the optimum no. of iterations
+no_iterations = 200
+
+# initialize array to store calculated error called as "Squared error function", or "Mean squared error"
+# after every iterations, which ideally should come close to zero.
+cost_history = np.zeros([no_iterations,1])
+
+# initialize theta values theta0 and theta1 to zero
+theta_history = np.zeros([no_iterations,2,1])
+
+# create theta array to store theta0 and theta1 values
+# These values are used in linear equation i.e theta0 + theta1*Hours for linear Regression
+theta =np.zeros([2,1])
+
+# set optimum alpha value
+#alpha value can be changed to see which value reduces the error cost value
+print('\nError Cost is calculated using alpha = 0.01')
+alpha = 0.01
+
+#gradiant descent batch update function for calculating theta values
+for x in range(no_iterations):
+
+    # gradient descent parameters
+    Delta = np.array([(sum((X_train@theta-y_train)*(X_train[:,0].reshape(-1,1))))/no_train_records,
+                  (sum((X_train@theta-y_train)*(X_train[:,1].reshape(-1,1))))/no_train_records])
+
+    # update values of theta0 and theta1 after every iteration
+    theta = theta-alpha*Delta
+
+    # store theta values
+    theta_history[x] = theta
+
+    # cost function for linear Regression
+    cost = sum((X_train @ theta - y_train) ** 2) / (2 * no_train_records)
+
+    # store cost after every iteration
+    cost_history[x] = cost
+
+    if x % 50 ==0:
+        print('\nError Cost after',x,' iterations is:',cost)
+        print('Predicted Score for Hours = 9.25 is:',theta[0]+theta[1]*9.25)
+
+# After training the Algorithm with training set, here are the predictions for the test set
+y_test_predictions = X_test@theta_history[no_iterations-1]
+print("Actual scores for test data \n:",y_test)
+print("Predicted scores for test data \n:",y_test_predictions)
+print('Mean Absolute Error:', metrics.mean_absolute_error(y_test, y_test_predictions))
